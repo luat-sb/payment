@@ -11,6 +11,9 @@ import { BaseSchemaLess } from '../base.entity';
 })
 export class User extends BaseSchemaLess {
   @Prop({ type: String })
+  stripeId?: string;
+
+  @Prop({ type: String })
   fullName: string;
 
   @Prop({ type: String })

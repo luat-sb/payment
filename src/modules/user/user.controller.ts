@@ -2,17 +2,19 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Param,
   Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/middlewares/guards';
-import { CreateUserDto, UpdateUserDto } from './dto';
-import { UserService } from './user.service';
+import { UserDecorator } from 'src/common/decorators';
 import { TimerDto } from 'src/common/dto';
-import { QueryUserDto } from './dto/query.dto';
+import { IJwtPayload } from 'src/common/interfaces/auth.interface';
+import { JwtAuthGuard } from 'src/middlewares/guards';
+import { CreateUserDto, QueryUserDto, UpdateUserDto } from './dto';
+import { UserService } from './user.service';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -21,8 +23,13 @@ import { QueryUserDto } from './dto/query.dto';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @Get('profile')
+  async getProfile(@UserDecorator() user: IJwtPayload) {
+    return this.userService.getOne(user.userId);
+  }
+
   @Post('listing')
-  async getListOrder(@Query() query: TimerDto, @Body() body: QueryUserDto) {
+  async getList(@Query() query: TimerDto, @Body() body: QueryUserDto) {
     return this.userService.getListUser(Object.assign(query, body));
   }
 

@@ -10,12 +10,14 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { IPayloadUpdateToken, IQueryMessage, encodePassword } from 'src/common';
 import { User } from 'src/database';
+import { StripeService } from '../stripe';
 
 @Injectable()
 export class UserService implements OnModuleInit {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<User>,
     private readonly configService: ConfigService,
+    private readonly stripeService: StripeService,
   ) {}
 
   async onModuleInit() {
@@ -28,11 +30,26 @@ export class UserService implements OnModuleInit {
     }
   }
 
+  async getOne(id: string) {
+    try {
+      const user = await this.userModel.findOne(
+        { id },
+        { password: 0, _id: 0, token: 0 },
+      );
+
+      return user;
+    } catch (error) {
+      throw new HttpException(
+        error?.message || null,
+        error?.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   async getListUser(payload: IQueryMessage<User>) {
     try {
       const { page, size, queryFields, orderFields } = payload;
-      const where = {};
-      const sort = {};
+      const [where, sort] = [{}, {}];
 
       const { id, ...restQuery } = queryFields;
       if (id) Object.assign(where, { id });
@@ -61,8 +78,6 @@ export class UserService implements OnModuleInit {
 
       return { results, total };
     } catch (error) {
-      console.log(error);
-
       throw new HttpException(
         error?.message || null,
         error?.status || HttpStatus.INTERNAL_SERVER_ERROR,
@@ -72,7 +87,7 @@ export class UserService implements OnModuleInit {
 
   async createUser(payload: Partial<User>) {
     try {
-      const { password, username } = payload;
+      const { password, username, fullName } = payload;
       if (!password) throw new BadRequestException('Empty password');
 
       const hashPwd = encodePassword(password);
@@ -84,6 +99,13 @@ export class UserService implements OnModuleInit {
       const checkExisted = await this.findUser(username);
 
       if (checkExisted) throw new BadRequestException('Account existed');
+
+      const stripeCustomer = await this.stripeService.createCustomer({
+        name: fullName,
+        email: username,
+      });
+
+      Object.assign(newUser, { stripeId: stripeCustomer.id });
 
       return newUser.save();
     } catch (error) {

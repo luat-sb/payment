@@ -29,8 +29,8 @@ export class AuthService {
     const user = await this.userService.findUser(username);
     if (!user || !user.token) return null;
 
-    const { id: userId } = user;
-    return { userId, username };
+    const { id: userId, fullName } = user;
+    return { userId, username, fullName };
   }
 
   async login(username: string, userId: string) {

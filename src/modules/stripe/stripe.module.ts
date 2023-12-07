@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ConfigurableModuleClass } from './builder';
+import { StripeController } from './stripe.controller';
 import { StripeService } from './stripe.service';
 
 @Module({
+  imports: [ConfigModule],
+  controllers: [StripeController],
   providers: [StripeService],
   exports: [StripeService],
-  imports: [ConfigModule],
 })
-export class StripeModule extends ConfigurableModuleClass {}
+export class StripeModule {}

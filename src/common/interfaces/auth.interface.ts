@@ -1,7 +1,8 @@
 export interface IJwtPayload {
-  userId: string;
   id?: string;
   exp?: number;
+  userId: string;
+  fullName: string;
 }
 
 export interface ICustomRequest extends Request {

@@ -9,3 +9,18 @@ export interface IStripeCustomer {
   name: string;
   email: string;
 }
+
+export interface IChargePayload {
+  amount: number;
+  paymentMethodId: string;
+  customerId?: string;
+}
+
+export interface ILineItem {
+  price: string;
+  quantity: number;
+}
+
+export interface ICheckoutSession {
+  line_items: ILineItem[];
+}

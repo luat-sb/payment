@@ -1,20 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule, MongooseModuleFactoryOptions } from '@nestjs/mongoose';
-import { StripeModuleOptions } from './common';
 import configuration from './configuration';
-import { AuthModule, StripeModule, UserModule } from './modules';
+import { AuthModule, ProductModule, StripeModule, UserModule } from './modules';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       load: [configuration],
       isGlobal: true,
-    }),
-    StripeModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) =>
-        configService.get<StripeModuleOptions>('stripe'),
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
@@ -23,7 +17,9 @@ import { AuthModule, StripeModule, UserModule } from './modules';
         configService.get<MongooseModuleFactoryOptions>('mongodb'),
     }),
     AuthModule,
+    StripeModule,
     UserModule,
+    ProductModule,
   ],
 })
 export class AppModule {}
