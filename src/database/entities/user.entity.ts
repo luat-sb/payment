@@ -19,6 +19,9 @@ export class User extends BaseSchemaLess {
   @Prop({ type: String })
   password: string;
 
+  @Prop({ type: Boolean, default: false })
+  isAdmin: boolean;
+
   @Prop({ type: String, required: false, default: null })
   token?: string;
 

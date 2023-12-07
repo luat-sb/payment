@@ -5,14 +5,14 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { PassportModule } from '@nestjs/passport';
 import { User, UserSchema } from 'src/database';
 import { JwtStrategy, LocalStrategy } from 'src/middlewares';
+import { UserModule } from '../user';
 import { AuthController } from './auth.controller';
-import { AuthService, TokenService, UserService } from './services';
+import { AuthService, TokenService } from './services';
 
-const services = [TokenService, AuthService, UserService];
+const services = [TokenService, AuthService];
 
 @Module({
   imports: [
-    ConfigModule,
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     PassportModule.register({
       defaultStrategy: 'jwt',
@@ -29,6 +29,7 @@ const services = [TokenService, AuthService, UserService];
         },
       }),
     }),
+    UserModule,
   ],
   controllers: [AuthController],
   providers: [LocalStrategy, JwtStrategy, ...services],

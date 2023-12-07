@@ -1,5 +1,11 @@
 export default () => ({
   port: process.env.PORT || 5000,
+  adminUser: {
+    fullName: process.env.ADMIN_USERNAME || 'fullName',
+    username: process.env.ADMIN_USERNAME || 'username',
+    password: process.env.ADMIN_PASSWORD || 'password',
+    isAdmin: true,
+  },
   mongodb: {
     uri: `mongodb://${process.env.DB_MONGO_USER || 'root'}:${
       process.env.DB_MONGO_PASSWORD || 'password'
