@@ -2,7 +2,13 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule, MongooseModuleFactoryOptions } from '@nestjs/mongoose';
 import configuration from './configuration';
-import { AuthModule, ProductModule, StripeModule, UserModule } from './modules';
+import {
+  AuthModule,
+  PaymentHistoryModule,
+  ProductModule,
+  StripeModule,
+  UserModule,
+} from './modules';
 
 @Module({
   imports: [
@@ -20,6 +26,7 @@ import { AuthModule, ProductModule, StripeModule, UserModule } from './modules';
     StripeModule,
     UserModule,
     ProductModule,
+    PaymentHistoryModule,
   ],
 })
 export class AppModule {}

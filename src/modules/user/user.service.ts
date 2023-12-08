@@ -34,7 +34,7 @@ export class UserService implements OnModuleInit {
     try {
       const user = await this.userModel.findOne(
         { id },
-        { password: 0, _id: 0, token: 0 },
+        { password: 0, token: 0 },
       );
 
       return user;
@@ -66,7 +66,7 @@ export class UserService implements OnModuleInit {
       const [results, total] = await Promise.all([
         this.userModel.find(
           where,
-          { id: 1, fullName: 1, username: 1 },
+          { id: 1, fullName: 1, username: 1, createdAt: 1 },
           {
             sort,
             skip: (page - 1) * size,

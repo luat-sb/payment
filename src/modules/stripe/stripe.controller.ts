@@ -1,18 +1,26 @@
-import { Body, Controller, Post, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  RawBodyRequest,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Request, Response } from 'express';
 import { JwtAuthGuard } from 'src/middlewares/guards';
 import { CheckoutSessionDto } from './dto';
 import { StripeService } from './stripe.service';
-import { Response } from 'express';
 
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @ApiTags('Stripe')
-@Controller('stripe')
+@Controller()
 export class StripeController {
   constructor(private readonly stripeService: StripeService) {}
 
-  @Post('check-session')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Post('stripe/check-session')
   async createCheckSession(
     @Body() body: CheckoutSessionDto,
     @Res() res: Response,
@@ -23,7 +31,10 @@ export class StripeController {
   }
 
   @Post('webhook')
-  async webhook(@Body() body: any) {
-    return this.stripeService.createCheckSession(body);
+  async webhook(@Req() req: RawBodyRequest<Request>) {
+    const sig = req.headers['stripe-signature'];
+    const raw = req.rawBody.toString();
+
+    return this.stripeService.handleHook(raw, sig);
   }
 }

@@ -6,23 +6,33 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
+  CHECKOUT_SESSION,
+  CHECKOUT_STATUS,
   IChargePayload,
   ICheckoutSession,
+  IPayloadCreateHistory,
   IStripeCustomer,
   STRIPE_PAYMENT_COMPLETED,
   StripeModuleOptions,
 } from 'src/common';
 import { Product } from 'src/database';
 import Stripe from 'stripe';
+import { PaymentHistoryService } from '../payment-history';
 
 @Injectable()
 export class StripeService {
-  public readonly stripe: Stripe;
-  public readonly currency: string = 'usd';
-  public readonly feUrl: string;
-  constructor(private readonly configService: ConfigService) {
+  private readonly stripe: Stripe;
+  private readonly currency: string = 'usd';
+  private readonly feUrl: string;
+  private readonly webhookSecret: string;
+
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly historyService: PaymentHistoryService,
+  ) {
     const stripeOptions = this.configService.get<StripeModuleOptions>('stripe');
     this.currency = this.configService.get('stripeCurrency');
+    this.webhookSecret = this.configService.get('stripeWebhookSecret');
     this.feUrl = this.configService.get('feUrl');
 
     const { apiKey, options } = stripeOptions;
@@ -123,6 +133,7 @@ export class StripeService {
 
       return session;
     } catch (error) {
+      console.log(error);
       throw new HttpException(
         error?.message || null,
         error?.status || HttpStatus.INTERNAL_SERVER_ERROR,
@@ -130,15 +141,42 @@ export class StripeService {
     }
   }
 
-  async handleHook(payload: any) {
+  async handleHook(payload: any, sig: string | string[]) {
     try {
-      const { data, type } = payload;
+      const event = this.stripe.webhooks.constructEvent(
+        payload,
+        sig,
+        this.webhookSecret,
+      );
 
-      if (type === STRIPE_PAYMENT_COMPLETED)
-        console.log(`🔔  Payment received!`, data);
+      const { data, type } = event;
+      const { object }: any = data;
+
+      if (object.object === CHECKOUT_SESSION) {
+        const {
+          amount_total: amount,
+          customer_details,
+          status,
+        } = object as any;
+        const { name: fullName, email: username } = customer_details;
+
+        if (type !== STRIPE_PAYMENT_COMPLETED)
+          throw new BadRequestException('Could not receive hook');
+
+        const receipt: IPayloadCreateHistory = {
+          username,
+          fullName,
+          amount,
+          status: status === CHECKOUT_STATUS,
+          metadata: object,
+        };
+
+        await this.historyService.createPaymentHistory(receipt);
+      }
 
       return true;
     } catch (error) {
+      console.log(error);
       throw new HttpException(
         error?.message || null,
         error?.status || HttpStatus.INTERNAL_SERVER_ERROR,

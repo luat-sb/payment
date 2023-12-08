@@ -16,7 +16,7 @@ export class User extends BaseSchemaLess {
   @Prop({ type: String })
   fullName: string;
 
-  @Prop({ type: String })
+  @Prop({ type: String, unique: true })
   username: string;
 
   @Prop({ type: String })
