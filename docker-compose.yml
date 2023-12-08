@@ -4,43 +4,20 @@ services:
   payment:
     container_name: be-payment
     image: be-payment
-    # restart: always
+    restart: always
     depends_on:
-      - mongodb-primary
+      - mongodb
     env_file: ./.env
     ports:
       - ${PORT}:${PORT}
-  mongodb-primary:
+  mongodb:
     image: docker.io/bitnami/mongodb:5.0
     environment:
-      - MONGODB_ADVERTISED_HOSTNAME=mongodb-primary
-      - MONGODB_REPLICA_SET_MODE=primary
       - MONGODB_ROOT_PASSWORD=${DB_MONGO_PASSWORD}
-      - MONGODB_REPLICA_SET_KEY=replicasetkey123
     volumes:
       - 'mongodb:/bitnami/mongodb'
     ports:
       - '${DB_MONGO_PORT}:27017'
-  mongodb-secondary:
-    image: docker.io/bitnami/mongodb:5.0
-    depends_on:
-      - mongodb-primary
-    environment:
-      - MONGODB_ADVERTISED_HOSTNAME=mongodb-secondary
-      - MONGODB_REPLICA_SET_MODE=secondary
-      - MONGODB_INITIAL_PRIMARY_HOST=mongodb-primary
-      - MONGODB_INITIAL_PRIMARY_ROOT_PASSWORD=${DB_MONGO_PASSWORD}
-      - MONGODB_REPLICA_SET_KEY=replicasetkey123
-  mongodb-arbiter:
-    image: docker.io/bitnami/mongodb:5.0
-    depends_on:
-      - mongodb-primary
-    environment:
-      - MONGODB_ADVERTISED_HOSTNAME=mongodb-arbiter
-      - MONGODB_REPLICA_SET_MODE=arbiter
-      - MONGODB_INITIAL_PRIMARY_HOST=mongodb-primary
-      - MONGODB_INITIAL_PRIMARY_ROOT_PASSWORD=${DB_MONGO_PASSWORD}
-      - MONGODB_REPLICA_SET_KEY=replicasetkey123
 volumes:
   mongodb:
     driver: local
