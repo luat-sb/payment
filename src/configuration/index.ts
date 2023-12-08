@@ -13,7 +13,6 @@ export default () => ({
     }@${process.env.DB_MONGO_HOST || 'localhost'}:${
       process.env.DB_MONGO_PORT || 27017
     }?directConnection=true`,
-    retryAttempts: 5,
   },
   stripe: {
     options: { apiVersion: process.env.STRIPE_API_VERSION || '2023-10-16' },

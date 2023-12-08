@@ -1,23 +1,19 @@
-FROM node:19-alpine as build
+FROM node:18-alpine as build
 
 WORKDIR /app
+
+COPY package.json yarn.lock ./
+
+RUN yarn install --production=false --frozen-lockfile
 
 COPY . .
 
-RUN npm ci && \
-  npm run build
+RUN yarn build
 
 
-
-FROM alpine:3.16 as main
-
-ENV NODE_VERSION 19.6.0
+FROM node:18-alpine as main
 
 WORKDIR /app
-
-RUN apk update && \
-    apk add nodejs \
-    npm
 
 COPY --from=build /app/dist /app/dist
 
@@ -27,4 +23,4 @@ COPY --from=build /app/package*.json /app
 
 EXPOSE 5000
 
-CMD ["node", "dist/main.js"]
+CMD node dist/main.js

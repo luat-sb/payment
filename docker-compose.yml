@@ -1,23 +1,13 @@
 version: '3.9'
 
 services:
-  auth-svc:
+  payment:
     container_name: be-payment
     image: be-payment
-    restart: always
+    # restart: always
     depends_on:
       - mongodb-primary
-    environment:
-      - PORT=${PORT}
-
-      - SECRET=${SECRET}
-      - EXPIRE=${EXPIRE}
-
-      - DB_USERNAME=${DB_USERNAME}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_DATABASE=${DB_DATABASE}
-      - DB_HOST=postgres
-      - DB_PORT=${DB_PORT}
+    env_file: ./.env
     ports:
       - ${PORT}:${PORT}
   mongodb-primary:
