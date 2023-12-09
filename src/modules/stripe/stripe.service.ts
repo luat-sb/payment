@@ -54,20 +54,23 @@ export class StripeService {
     try {
       const { name, price } = payload;
 
-      const product = await this.stripe.products.create({
-        name,
-      });
+      const [product, priceObj] = await Promise.all([
+        this.stripe.products.create({ name }),
+        this.stripe.prices.create({
+          currency: this.currency,
+          unit_amount: price,
+        })
+      ])
 
-      if (!product) throw new BadRequestException('Something wrong');
+      if (!product || !priceObj) throw new BadRequestException('Something wrong');
 
-      const priceObj = await this.stripe.prices.create({
-        currency: this.currency,
-        unit_amount: price,
-        product_data: {
-          id: product.id,
-          name: product.name,
-        },
-      });
+      await this.stripe.products.update(
+        product.id,
+        {
+          default_price: priceObj.id
+        }
+      )
+
 
       return { product, priceObj };
     } catch (error) {

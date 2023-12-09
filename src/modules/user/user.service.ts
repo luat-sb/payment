@@ -23,7 +23,7 @@ export class UserService implements OnModuleInit {
   async onModuleInit() {
     try {
       const admin = this.configService.get<User>('adminUser');
-      await this.createUser(admin);
+      await this.initAdmin(admin);
       console.info('Initialized');
     } catch (error) {
       console.error(error.message || 'Init failed');
@@ -38,6 +38,30 @@ export class UserService implements OnModuleInit {
       );
 
       return user;
+    } catch (error) {
+      throw new HttpException(
+        error?.message || null,
+        error?.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  private async initAdmin(payload: Partial<User>) {
+    try {
+      const { password, username, fullName } = payload;
+      if (!password) throw new BadRequestException('Empty password');
+
+      const hashPwd = encodePassword(password);
+
+      const newUser = new this.userModel(
+        Object.assign(payload, { password: hashPwd }),
+      );
+
+      const checkExisted = await this.findUser(username);
+
+      if (checkExisted) throw new BadRequestException('Account existed');
+
+      return newUser.save();
     } catch (error) {
       throw new HttpException(
         error?.message || null,
