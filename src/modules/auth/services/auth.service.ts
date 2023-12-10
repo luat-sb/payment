@@ -9,7 +9,7 @@ export class AuthService {
   constructor(
     private readonly tokenService: TokenService,
     private readonly userService: UserService,
-  ) {}
+  ) { }
 
   async validateUser(username: string, password: string) {
     const user = await this.userService.findUser(username);
@@ -18,8 +18,8 @@ export class AuthService {
     const isCorrectPassword = comparePasswords(password, user.password || '');
 
     if (isCorrectPassword) {
-      const { id, username } = user;
-      return { id, username };
+      const { id, username, stripeId } = user;
+      return { id, username, stripeId };
     }
 
     return null;
@@ -29,13 +29,13 @@ export class AuthService {
     const user = await this.userService.findUser(username);
     if (!user || !user.token) return null;
 
-    const { id: userId, fullName } = user;
-    return { userId, username, fullName };
+    const { id: userId, fullName, stripeId } = user;
+    return { userId, username, fullName, stripeId };
   }
 
-  async login(username: string, userId: string) {
+  async login(username: string, userId: string, stripeId: string) {
     try {
-      const access_token = this.tokenService.generateToken(username, userId);
+      const access_token = this.tokenService.generateToken(username, userId, stripeId);
       const expired_date = this.tokenService.generateExpireDate();
 
       await this.userService.updateToken(userId, {

@@ -8,11 +8,11 @@ export class TokenService {
   constructor(
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
-  generateToken(username: string, userId: string): string {
+  generateToken(username: string, userId: string, stripeId: string): string {
     return this.jwtService.sign(
-      { username, userId },
+      { username, userId, stripeId },
       {
         secret: this.configService.get<string>('jwt.secret'),
         expiresIn: this.configService.get<string>('jwt.expire') + 's',

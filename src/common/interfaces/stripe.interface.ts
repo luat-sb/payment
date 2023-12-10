@@ -24,3 +24,8 @@ export interface ILineItem {
 export interface ICheckoutSession {
   line_items: ILineItem[];
 }
+
+export interface IPaymentIntent {
+  amount: number;
+  userStripeId?: string
+}

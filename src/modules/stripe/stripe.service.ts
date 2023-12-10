@@ -11,9 +11,9 @@ import {
   IChargePayload,
   ICheckoutSession,
   IPayloadCreateHistory,
+  IPaymentIntent,
   IStripeCustomer,
-  STRIPE_PAYMENT_COMPLETED,
-  StripeModuleOptions,
+  StripeModuleOptions
 } from 'src/common';
 import { Product } from 'src/database';
 import Stripe from 'stripe';
@@ -144,6 +144,68 @@ export class StripeService {
     }
   }
 
+  async createPaymentIntent(payload: IPaymentIntent) {
+    try {
+      const { amount, userStripeId } = payload;
+
+      const dataSession: Stripe.PaymentIntentCreateParams = {
+        amount: amount * 100,
+        currency: this.currency,
+        automatic_payment_methods: { enabled: true },
+
+      };
+
+      if (userStripeId) Object.assign(dataSession, { customer: userStripeId })
+
+      const session = await this.stripe.paymentIntents.create(dataSession);
+
+      return session;
+    } catch (error) {
+      console.log(error);
+      throw new HttpException(
+        error?.message || null,
+        error?.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  handleSession(payload: any): IPayloadCreateHistory {
+    const {
+      amount_total: amount,
+      customer_details,
+      status,
+    } = payload as any;
+    const { name: fullName, email: username } = customer_details;
+
+
+    return {
+      username,
+      fullName,
+      amount,
+      status: status === CHECKOUT_STATUS,
+      metadata: payload,
+    };
+
+  }
+
+  handleIntent(payload: any): IPayloadCreateHistory {
+    const {
+      amount_total: amount,
+      customer_details,
+      status,
+    } = payload as any;
+    const { name: fullName, email: username } = customer_details;
+
+    return {
+      username,
+      fullName,
+      amount,
+      status: status === CHECKOUT_STATUS,
+      metadata: payload,
+    };
+
+  }
+
   async handleHook(payload: any, sig: string | string[]) {
     try {
       const event = this.stripe.webhooks.constructEvent(
@@ -155,27 +217,11 @@ export class StripeService {
       const { data, type } = event;
       const { object }: any = data;
 
-      if (object.object === CHECKOUT_SESSION) {
-        const {
-          amount_total: amount,
-          customer_details,
-          status,
-        } = object as any;
-        const { name: fullName, email: username } = customer_details;
+      const receipt: IPayloadCreateHistory = {
+        [CHECKOUT_SESSION]: this.handleSession(object)
+      }[object.object];
 
-        if (type !== STRIPE_PAYMENT_COMPLETED)
-          throw new BadRequestException('Could not receive hook');
-
-        const receipt: IPayloadCreateHistory = {
-          username,
-          fullName,
-          amount,
-          status: status === CHECKOUT_STATUS,
-          metadata: object,
-        };
-
-        await this.historyService.createPaymentHistory(receipt);
-      }
+      await this.historyService.createPaymentHistory(receipt);
 
       return true;
     } catch (error) {

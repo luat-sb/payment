@@ -9,13 +9,13 @@ import { AuthService } from './services';
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
   async login(@Body() body: LoginDto, @UserDecorator() user: IJwtPayload) {
     const { username } = body;
-    return this.authService.login(username, user.id);
+    return this.authService.login(username, user.id, user.stripeId);
   }
 
   @ApiBearerAuth()

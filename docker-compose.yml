@@ -12,6 +12,7 @@ services:
       - ${PORT}:${PORT}
   mongodb:
     image: docker.io/bitnami/mongodb:5.0
+    container_name: mongodb
     environment:
       - MONGODB_ROOT_PASSWORD=${DB_MONGO_PASSWORD}
     volumes:

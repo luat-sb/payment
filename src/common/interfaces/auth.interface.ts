@@ -1,5 +1,6 @@
 export interface IJwtPayload {
   id?: string;
+  stripeId: string;
   exp?: number;
   userId: string;
   fullName: string;

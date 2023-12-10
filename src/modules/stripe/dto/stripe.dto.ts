@@ -7,7 +7,7 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { IChargePayload, ICheckoutSession, ILineItem } from 'src/common';
+import { IChargePayload, ICheckoutSession, ILineItem, IPaymentIntent } from 'src/common';
 
 export class ChargeDto implements IChargePayload {
   @ApiProperty({ required: true })
@@ -39,4 +39,11 @@ export class CheckoutSessionDto implements ICheckoutSession {
   @ValidateNested({ each: true })
   @Type(() => LineItemDto)
   line_items: LineItemDto[];
+}
+
+
+export class PaymentIntentDto implements IPaymentIntent {
+  @ApiProperty({ required: true })
+  @IsNumber()
+  amount: number;
 }

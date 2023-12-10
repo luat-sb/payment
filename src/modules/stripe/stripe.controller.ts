@@ -10,17 +10,19 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { JwtAuthGuard } from 'src/middlewares/guards';
-import { CheckoutSessionDto } from './dto';
+import { CheckoutSessionDto, PaymentIntentDto } from './dto';
 import { StripeService } from './stripe.service';
+import { UserDecorator } from 'src/common/decorators';
+import { IJwtPayload } from 'src/common/interfaces/auth.interface';
 
 @ApiTags('Stripe')
 @Controller()
 export class StripeController {
-  constructor(private readonly stripeService: StripeService) {}
+  constructor(private readonly stripeService: StripeService) { }
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  @Post('stripe/check-session')
+  @Post('stripe/checkout-session')
   async createCheckSession(
     @Body() body: CheckoutSessionDto,
     @Res() res: Response,
@@ -28,6 +30,19 @@ export class StripeController {
     const session = await this.stripeService.createCheckSession(body);
 
     return res.redirect(303, session.url);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Post('stripe/create-payment-intent')
+  async createPaymentIntent(
+    @Body() body: PaymentIntentDto,
+    @UserDecorator() user: IJwtPayload
+  ) {
+    Object.assign(body, { userStripeId: user.stripeId })
+    const session = await this.stripeService.createPaymentIntent(body);
+
+    return { clientSecret: session.client_secret };
   }
 
   @Post('webhook')
