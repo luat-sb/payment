@@ -48,7 +48,7 @@ export class UserService implements OnModuleInit {
 
   private async initAdmin(payload: Partial<User>) {
     try {
-      const { password, username, fullName } = payload;
+      const { password, username } = payload;
       if (!password) throw new BadRequestException('Empty password');
 
       const hashPwd = encodePassword(password);

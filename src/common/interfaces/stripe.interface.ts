@@ -27,5 +27,6 @@ export interface ICheckoutSession {
 
 export interface IPaymentIntent {
   amount: number;
-  userStripeId?: string
+  userStripeId?: string;
+  userId?: string;
 }

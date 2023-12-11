@@ -18,7 +18,7 @@ import { IJwtPayload } from 'src/common/interfaces/auth.interface';
 @ApiTags('Stripe')
 @Controller()
 export class StripeController {
-  constructor(private readonly stripeService: StripeService) { }
+  constructor(private readonly stripeService: StripeService) {}
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
@@ -37,9 +37,12 @@ export class StripeController {
   @Post('stripe/create-payment-intent')
   async createPaymentIntent(
     @Body() body: PaymentIntentDto,
-    @UserDecorator() user: IJwtPayload
+    @UserDecorator() user: IJwtPayload,
   ) {
-    Object.assign(body, { userStripeId: user.stripeId })
+    Object.assign(body, {
+      userStripeId: user.stripeId,
+      userId: user.id || user.userId,
+    });
     const session = await this.stripeService.createPaymentIntent(body);
 
     return { clientSecret: session.client_secret };

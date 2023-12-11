@@ -14,6 +14,9 @@ export class PaymentHistory extends BaseSchemaLess {
   user: string;
 
   @Prop({ type: String })
+  stripeId: string;
+
+  @Prop({ type: String })
   fullName: string;
 
   @Prop({ type: Number })

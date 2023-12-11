@@ -6,14 +6,12 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
-  CHECKOUT_SESSION,
-  CHECKOUT_STATUS,
-  IChargePayload,
   ICheckoutSession,
-  IPayloadCreateHistory,
   IPaymentIntent,
   IStripeCustomer,
-  StripeModuleOptions
+  PAYMENT_INTENT,
+  PAYMENT_INTENT_SUCCEED,
+  StripeModuleOptions,
 } from 'src/common';
 import { Product } from 'src/database';
 import Stripe from 'stripe';
@@ -59,18 +57,15 @@ export class StripeService {
         this.stripe.prices.create({
           currency: this.currency,
           unit_amount: price,
-        })
-      ])
+        }),
+      ]);
 
-      if (!product || !priceObj) throw new BadRequestException('Something wrong');
+      if (!product || !priceObj)
+        throw new BadRequestException('Something wrong');
 
-      await this.stripe.products.update(
-        product.id,
-        {
-          default_price: priceObj.id
-        }
-      )
-
+      await this.stripe.products.update(product.id, {
+        default_price: priceObj.id,
+      });
 
       return { product, priceObj };
     } catch (error) {
@@ -95,23 +90,6 @@ export class StripeService {
   async deleteProduct(id: string) {
     try {
       return this.stripe.products.del(id);
-    } catch (error) {
-      throw new HttpException(
-        error?.message || null,
-        error?.status || HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  async charge({ amount, paymentMethodId, customerId }: IChargePayload) {
-    try {
-      return this.stripe.paymentIntents.create({
-        amount,
-        customer: customerId,
-        payment_method: paymentMethodId,
-        currency: this.currency,
-        confirm: false,
-      });
     } catch (error) {
       throw new HttpException(
         error?.message || null,
@@ -146,18 +124,25 @@ export class StripeService {
 
   async createPaymentIntent(payload: IPaymentIntent) {
     try {
-      const { amount, userStripeId } = payload;
+      const { amount, userStripeId, userId } = payload;
 
       const dataSession: Stripe.PaymentIntentCreateParams = {
         amount: amount * 100,
         currency: this.currency,
         automatic_payment_methods: { enabled: true },
-
       };
 
-      if (userStripeId) Object.assign(dataSession, { customer: userStripeId })
+      if (userStripeId) Object.assign(dataSession, { customer: userStripeId });
 
       const session = await this.stripe.paymentIntents.create(dataSession);
+
+      await this.historyService.createPaymentHistory({
+        userId,
+        amount,
+        status: false,
+        metadata: null,
+        stripeId: session.id,
+      });
 
       return session;
     } catch (error) {
@@ -169,41 +154,14 @@ export class StripeService {
     }
   }
 
-  handleSession(payload: any): IPayloadCreateHistory {
-    const {
-      amount_total: amount,
-      customer_details,
-      status,
-    } = payload as any;
-    const { name: fullName, email: username } = customer_details;
+  async handleIntent(payload: any) {
+    const { id, status } = payload;
 
-
-    return {
-      username,
-      fullName,
-      amount,
-      status: status === CHECKOUT_STATUS,
+    const paymentStatus = status === PAYMENT_INTENT_SUCCEED;
+    await this.historyService.updatePayment(id, {
+      status: paymentStatus,
       metadata: payload,
-    };
-
-  }
-
-  handleIntent(payload: any): IPayloadCreateHistory {
-    const {
-      amount_total: amount,
-      customer_details,
-      status,
-    } = payload as any;
-    const { name: fullName, email: username } = customer_details;
-
-    return {
-      username,
-      fullName,
-      amount,
-      status: status === CHECKOUT_STATUS,
-      metadata: payload,
-    };
-
+    });
   }
 
   async handleHook(payload: any, sig: string | string[]) {
@@ -214,22 +172,18 @@ export class StripeService {
         this.webhookSecret,
       );
 
-      const { data, type } = event;
+      const { data } = event;
       const { object }: any = data;
 
-      const receipt: IPayloadCreateHistory = {
-        [CHECKOUT_SESSION]: this.handleSession(object)
+      const receiptFunc = {
+        [PAYMENT_INTENT]: async () => this.handleIntent(object),
       }[object.object];
 
-      await this.historyService.createPaymentHistory(receipt);
+      receiptFunc && (await receiptFunc());
 
       return true;
     } catch (error) {
       console.log(error);
-      throw new HttpException(
-        error?.message || null,
-        error?.status || HttpStatus.INTERNAL_SERVER_ERROR,
-      );
     }
   }
 }

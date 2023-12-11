@@ -1,7 +1,8 @@
 export interface IPayloadCreateHistory {
-  username: string;
+  userId: string;
   fullName?: string;
   amount: number;
   status: boolean;
   metadata: any;
+  stripeId: string;
 }

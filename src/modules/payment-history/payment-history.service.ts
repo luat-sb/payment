@@ -79,15 +79,37 @@ export class PaymentHistoryService {
 
   async createPaymentHistory(payload: IPayloadCreateHistory) {
     try {
-      const { username } = payload;
-      const user = await this.userModel.findOne({ username });
+      const { userId } = payload;
+      const user = await this.userModel.findOne({ id: userId });
       if (!user) throw new NotFoundException('Not found user');
 
       const newPaymentHistory = new this.paymentHistoryModel(
-        Object.assign(payload, { user: user.id }),
+        Object.assign(payload, { user: user.id, fullName: user.fullName }),
       );
 
       return newPaymentHistory.save();
+    } catch (error) {
+      throw new HttpException(
+        error?.message || null,
+        error?.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async updatePayment(
+    stripeId: string,
+    { status, metadata }: { status: boolean; metadata: unknown },
+  ) {
+    try {
+      const history = await this.paymentHistoryModel.findOne({ stripeId });
+      if (!history) throw new NotFoundException();
+
+      await this.paymentHistoryModel.updateOne(
+        { id: history.id },
+        { status, metadata },
+      );
+
+      return history;
     } catch (error) {
       throw new HttpException(
         error?.message || null,
