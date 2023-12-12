@@ -13,7 +13,12 @@ import { UserDecorator } from 'src/common/decorators';
 import { TimerDto } from 'src/common/dto';
 import { IJwtPayload } from 'src/common/interfaces/auth.interface';
 import { JwtAuthGuard } from 'src/middlewares/guards';
-import { CreateUserDto, QueryUserDto, UpdateUserDto } from './dto';
+import {
+  CreateUserDto,
+  DeleteUserDto,
+  QueryUserDto,
+  UpdateUserDto,
+} from './dto';
 import { UserService } from './user.service';
 
 @ApiBearerAuth()
@@ -46,5 +51,11 @@ export class UserController {
   @Delete('delete/:id')
   async deleteUser(@Param('id') id: string) {
     return this.userService.deleteUser(id);
+  }
+
+  @Post('delete')
+  async deleteManyUser(@Body() body: DeleteUserDto) {
+    const { ids } = body;
+    return this.userService.deleteManyUser(ids);
   }
 }

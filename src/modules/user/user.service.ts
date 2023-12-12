@@ -190,4 +190,15 @@ export class UserService implements OnModuleInit {
       );
     }
   }
+
+  async deleteManyUser(ids: string[]) {
+    try {
+      return await this.userModel.deleteMany({ id: { $in: ids } });
+    } catch (error) {
+      throw new HttpException(
+        error?.message || null,
+        error?.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

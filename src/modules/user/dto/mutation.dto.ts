@@ -1,5 +1,5 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { IsArray, IsEmail, IsNotEmpty, IsString } from 'class-validator';
 import { User } from 'src/database';
 
 export class CreateUserDto implements Omit<User, 'isAdmin'> {
@@ -20,3 +20,9 @@ export class CreateUserDto implements Omit<User, 'isAdmin'> {
 }
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {}
+export class DeleteUserDto {
+  @ApiProperty({ required: true, isArray: true })
+  @IsArray()
+  @IsString({ each: true })
+  ids: string[];
+}

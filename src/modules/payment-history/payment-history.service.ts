@@ -34,7 +34,7 @@ export class PaymentHistoryService {
   async getListPaymentHistory(payload: IQueryMessage<PaymentHistory>) {
     try {
       const { page, size, queryFields, orderFields } = payload;
-      const [where, sort] = [{}, {}];
+      const [where, sort] = [{ status: true }, {}];
 
       for (const key in queryFields) {
         Object.assign(where, { [key]: queryFields[key] });
